@@ -1,0 +1,12 @@
+diff -urN gnome-initial-setup-3.10.1.1.orig/gnome-initial-setup/pages/summary/gis-summary-page.c gnome-initial-setup-3.10.1.1/gnome-initial-setup/pages/summary/gis-summary-page.c
+--- gnome-initial-setup-3.10.1.1.orig/gnome-initial-setup/pages/summary/gis-summary-page.c	2013-10-23 13:44:49.072780762 +0400
++++ gnome-initial-setup-3.10.1.1/gnome-initial-setup/pages/summary/gis-summary-page.c	2013-10-23 13:45:07.231782106 +0400
+@@ -339,7 +339,7 @@
+ 
+   if (g_file_get_contents ("/etc/os-release", &buffer, NULL, NULL))
+     {
+-      name = get_item (buffer, "NAME");
++      name = get_item (buffer, "PRETTY_NAME");
+       g_free (buffer);
+     }
+ 
