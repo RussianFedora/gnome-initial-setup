@@ -11,7 +11,7 @@ Source0:        http://download.gnome.org/sources/%{name}/3.10/%{name}-%{version
 # https://bugzilla.gnome.org/show_bug.cgi?id=687957
 Patch0: yelp-fixes.patch
 # Read PRETTY_NAME istead of NAME for RFRemix
-Patch0:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
+Patch1:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
