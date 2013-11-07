@@ -1,6 +1,6 @@
 Name:           gnome-initial-setup
 Version:        3.10.1.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
@@ -10,8 +10,12 @@ Source0:        http://download.gnome.org/sources/%{name}/3.10/%{name}-%{version
 # this depends on a yelp patch that hasn't been merged upstream yet
 # https://bugzilla.gnome.org/show_bug.cgi?id=687957
 Patch0: yelp-fixes.patch
+
+# upstream fix
+Patch1: goa-add.patch
+
 # Read PRETTY_NAME istead of NAME for RFRemix
-Patch1:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
+Patch99:	gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
@@ -68,7 +72,8 @@ you through configuring it. It is integrated with gdm.
 %prep
 %setup -q
 %patch0 -p1 -b .yelp-fixes
-%patch1 -p1 -b .pretty_name
+%patch1 -p1 -b .goa
+%patch99 -p1 -b .pretty_name
 
 autoreconf -i -f
 
@@ -110,6 +115,9 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Fri Nov  1 2013 Matthias Clasen <mclasen@redhat.com> - 3.10.1.1-2.R
+- Fix goa add dialog to not be empty
+
 * Wed Oct 23 2013 Arkady L. Shane <ashejn@russianfedora.ru> - 3.10.1.1-1.R
 - read PRETTY_NAME instead of NAME from /etc/os-release
 
