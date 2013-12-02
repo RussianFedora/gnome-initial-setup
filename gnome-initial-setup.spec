@@ -1,6 +1,6 @@
 Name:           gnome-initial-setup
 Version:        3.10.1.1
-Release:        2%{?dist}
+Release:        4%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
@@ -13,6 +13,8 @@ Patch0: yelp-fixes.patch
 
 # upstream fix
 Patch1: goa-add.patch
+Patch2: 0001-goa-Prevent-a-use-after-free.patch
+Patch3: 0001-Disable-GOA-page-in-new-user-mode.patch
 
 # Read PRETTY_NAME istead of NAME for RFRemix
 Patch99:	gnome-initial-setup-3.10.1.1-read-pretty_name.patch
@@ -73,6 +75,8 @@ you through configuring it. It is integrated with gdm.
 %setup -q
 %patch0 -p1 -b .yelp-fixes
 %patch1 -p1 -b .goa
+%patch2 -p1
+%patch3 -p1
 %patch99 -p1 -b .pretty_name
 
 autoreconf -i -f
@@ -115,6 +119,12 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Fri Nov 29 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-4.R
+- Resolves: rhbz#1035548 - Disables the GOA page in new user mode
+
+* Thu Nov 28 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-3.R
+- Resolves: rhbz#1027507 - [abrt] gnome-initial-setup-3.10.1.1-2.fc20: magazine_chain_pop_head
+
 * Fri Nov  1 2013 Matthias Clasen <mclasen@redhat.com> - 3.10.1.1-2.R
 - Fix goa add dialog to not be empty
 
