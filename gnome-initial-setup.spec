@@ -1,23 +1,16 @@
 Name:           gnome-initial-setup
-Version:        3.10.1.1
-Release:        5%{?dist}
+Version:        3.11.90
+Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
-Source0:        http://download.gnome.org/sources/%{name}/3.10/%{name}-%{version}.tar.xz
+Source0:        http://download.gnome.org/sources/%{name}/3.11/%{name}-%{version}.tar.xz
 
 # this depends on a yelp patch that hasn't been merged upstream yet
 # https://bugzilla.gnome.org/show_bug.cgi?id=687957
 Patch0: yelp-fixes.patch
-
-# upstream fix
-Patch1: goa-add.patch
-Patch2: 0001-goa-Prevent-a-use-after-free.patch
-Patch3: 0001-Disable-GOA-page-in-new-user-mode.patch
-
-# Read PRETTY_NAME istead of NAME for RFRemix
-Patch99:	gnome-initial-setup-3.10.1.1-read-pretty_name.patch
+Patch9: gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
@@ -33,9 +26,10 @@ BuildRequires:  pkgconfig(libnm-util) >= %{nm_version}
 BuildRequires:  pkgconfig(libnm-gtk)
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(gnome-desktop-3.0)
-BuildRequires:  pkgconfig(gstreamer-0.10)
+BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(cheese)
 BuildRequires:  pkgconfig(cheese-gtk) >= 3.3.5
+BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(geoclue)
 BuildRequires:  pkgconfig(gweather-3.0)
 BuildRequires:  pkgconfig(goa-1.0)
@@ -47,9 +41,8 @@ BuildRequires:  pkgconfig(gio-unix-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gdm)
 BuildRequires:  pkgconfig(iso-codes)
 BuildRequires:  krb5-devel
-BuildRequires:  autoconf automake libtool
-BuildRequires:  gnome-common
 BuildRequires:  ibus-devel
+BuildRequires:  rest-devel
 BuildRequires:  polkit-devel
 
 # gnome-initial-setup is being run by gdm
@@ -74,18 +67,14 @@ you through configuring it. It is integrated with gdm.
 %prep
 %setup -q
 %patch0 -p1 -b .yelp-fixes
-%patch1 -p1 -b .goa
-%patch2 -p1
-%patch3 -p1
-%patch99 -p1 -b .pretty_name
-
-autoreconf -i -f
+%patch9 -p1 -b .read-pretty_name
 
 %build
 %configure
 make %{?_smp_mflags}
 
 %install
+sed -i 's@/builddir/install-sh@../install-sh@g' po/Makefile
 make install DESTDIR=%{buildroot}
 find %{buildroot} -name '*.la' -exec rm -f {} ';'
 
@@ -110,7 +99,6 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_libexecdir}/gnome-welcome-tour
 %{_sysconfdir}/xdg/autostart/gnome-welcome-tour.desktop
 %{_sysconfdir}/xdg/autostart/gnome-initial-setup-copy-worker.desktop
-%{_sysconfdir}/xdg/autostart/gnome-initial-setup-first-login.desktop
 
 %{_datadir}/gdm/greeter/applications/gnome-initial-setup.desktop
 %{_datadir}/gdm/greeter/applications/setup-shell.desktop
@@ -119,22 +107,25 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
-* Wed Feb 19 2014 Kalev Lember <kalevlember@gmail.com> - 3.10.1.1-5.R
+* Tue Mar  4 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.90-1.R
+- show RFRemix instead of Fedora
+
+* Fri Feb 28 2014 Richard Hughes <rhughes@redhat.com> - 3.11.90-1
+- Update to 3.11.90
+
+* Wed Feb 19 2014 Kalev Lember <kalevlember@gmail.com> - 3.10.1.1-5
 - Rebuilt for libgnome-desktop soname bump
 
-* Fri Nov 29 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-4.R
+* Fri Nov 29 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-4
 - Resolves: rhbz#1035548 - Disables the GOA page in new user mode
 
-* Thu Nov 28 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-3.R
+* Thu Nov 28 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-3
 - Resolves: rhbz#1027507 - [abrt] gnome-initial-setup-3.10.1.1-2.fc20: magazine_chain_pop_head
 
-* Fri Nov  1 2013 Matthias Clasen <mclasen@redhat.com> - 3.10.1.1-2.R
+* Fri Nov  1 2013 Matthias Clasen <mclasen@redhat.com> - 3.10.1.1-2
 - Fix goa add dialog to not be empty
 
-* Wed Oct 23 2013 Arkady L. Shane <ashejn@russianfedora.ru> - 3.10.1.1-1.R
-- read PRETTY_NAME instead of NAME from /etc/os-release
-
-* Tue Oct 15 2013 Richard Hughes <rhughes@redhat.com> - 3.10.1.1-1
+* Mon Oct 28 2013 Richard Hughes <rhughes@redhat.com> - 3.10.1.1-1
 - Update to 3.10.1.1
 
 * Thu Sep 26 2013 Kalev Lember <kalevlember@gmail.com> - 3.10.0.1-1
