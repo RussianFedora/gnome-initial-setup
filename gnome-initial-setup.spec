@@ -119,7 +119,7 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
-Wed Feb 19 2014 Kalev Lember <kalevlember@gmail.com> - 3.10.1.1-5.R
+* Wed Feb 19 2014 Kalev Lember <kalevlember@gmail.com> - 3.10.1.1-5.R
 - Rebuilt for libgnome-desktop soname bump
 
 * Fri Nov 29 2013 Rui Matos <rmatos@redhat.com> - 3.10.1.1-4.R
