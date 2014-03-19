@@ -1,5 +1,5 @@
 Name:           gnome-initial-setup
-Version:        3.11.90
+Version:        3.11.91
 Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
@@ -107,6 +107,9 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Wed Mar 19 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.91-1.R
+- update 3.11.92
+
 * Tue Mar  4 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.90-1.R
 - show RFRemix instead of Fedora
 
