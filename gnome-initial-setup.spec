@@ -40,6 +40,7 @@ BuildRequires:  pkgconfig(gio-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gio-unix-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gdm)
 BuildRequires:  pkgconfig(iso-codes)
+BuildRequires:  pkgconfig(libsecret-1)
 BuildRequires:  krb5-devel
 BuildRequires:  ibus-devel
 BuildRequires:  rest-devel
