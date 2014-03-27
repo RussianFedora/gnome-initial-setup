@@ -1,11 +1,11 @@
 Name:           gnome-initial-setup
-Version:        3.11.91
+Version:        3.12.0
 Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
-Source0:        http://download.gnome.org/sources/%{name}/3.11/%{name}-%{version}.tar.xz
+Source0:        http://download.gnome.org/sources/%{name}/3.12/%{name}-%{version}.tar.xz
 
 # this depends on a yelp patch that hasn't been merged upstream yet
 # https://bugzilla.gnome.org/show_bug.cgi?id=687957
@@ -30,7 +30,6 @@ BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(cheese)
 BuildRequires:  pkgconfig(cheese-gtk) >= 3.3.5
 BuildRequires:  pkgconfig(fontconfig)
-BuildRequires:  pkgconfig(geoclue)
 BuildRequires:  pkgconfig(gweather-3.0)
 BuildRequires:  pkgconfig(goa-1.0)
 BuildRequires:  pkgconfig(goa-backend-1.0)
@@ -40,11 +39,11 @@ BuildRequires:  pkgconfig(gio-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gio-unix-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gdm)
 BuildRequires:  pkgconfig(iso-codes)
-BuildRequires:  pkgconfig(libsecret-1)
 BuildRequires:  krb5-devel
 BuildRequires:  ibus-devel
 BuildRequires:  rest-devel
 BuildRequires:  polkit-devel
+BuildRequires:  libsecret-devel
 
 # gnome-initial-setup is being run by gdm
 Requires: gdm
@@ -75,7 +74,6 @@ you through configuring it. It is integrated with gdm.
 make %{?_smp_mflags}
 
 %install
-sed -i 's@/builddir/install-sh@../install-sh@g' po/Makefile
 make install DESTDIR=%{buildroot}
 find %{buildroot} -name '*.la' -exec rm -f {} ';'
 
@@ -108,6 +106,9 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Thu Mar 27 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.0-1.R
+- update to 3.12.0
+
 * Wed Mar 19 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.91-1.R
 - update 3.11.92
 
