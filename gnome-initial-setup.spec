@@ -1,6 +1,6 @@
 Name:           gnome-initial-setup
-Version:        3.12.0
-Release:        1.1%{?dist}
+Version:        3.12.1
+Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
@@ -106,6 +106,9 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Wed May 28 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.1-1.R
+- update to 3.12.1
+
 * Thu Mar 27 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.0-1.R
 - update to 3.12.0
 
