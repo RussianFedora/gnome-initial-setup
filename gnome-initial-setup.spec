@@ -1,20 +1,17 @@
 Name:           gnome-initial-setup
-Version:        3.12.1
-Release:        1%{?dist}
+Version:        3.13.4
+Release:        3%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
-Source0:        http://download.gnome.org/sources/%{name}/3.12/%{name}-%{version}.tar.xz
-
-# this depends on a yelp patch that hasn't been merged upstream yet
-# https://bugzilla.gnome.org/show_bug.cgi?id=687957
-Patch0: yelp-fixes.patch
+Source0:        http://download.gnome.org/sources/%{name}/3.13/%{name}-%{version}.tar.xz
 Patch9: gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
-%global gtk_required_version 3.7.11
+%global gtk_required_version 3.11.3
+%global geoclue_version 2.1.2
 
 BuildRequires:  krb5-devel
 BuildRequires:  desktop-file-utils
@@ -30,6 +27,7 @@ BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(cheese)
 BuildRequires:  pkgconfig(cheese-gtk) >= 3.3.5
 BuildRequires:  pkgconfig(fontconfig)
+BuildRequires:  pkgconfig(geoclue-2.0) >= %{geoclue_version}
 BuildRequires:  pkgconfig(gweather-3.0)
 BuildRequires:  pkgconfig(goa-1.0)
 BuildRequires:  pkgconfig(goa-backend-1.0)
@@ -47,6 +45,7 @@ BuildRequires:  libsecret-devel
 
 # gnome-initial-setup is being run by gdm
 Requires: gdm
+Requires: geoclue2 >= %{geoclue_version}
 # we install a rules file
 Requires: polkit-js-engine
 Requires: /usr/bin/gkbd-keyboard-display
@@ -66,7 +65,6 @@ you through configuring it. It is integrated with gdm.
 
 %prep
 %setup -q
-%patch0 -p1 -b .yelp-fixes
 %patch9 -p1 -b .read-pretty_name
 
 %build
@@ -106,6 +104,9 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Sat Aug 30 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.13.4-1.R
+- update to 3.13.4
+
 * Wed May 28 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.1-1.R
 - update to 3.12.1
 
