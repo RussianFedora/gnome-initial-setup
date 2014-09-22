@@ -1,6 +1,6 @@
 Name:           gnome-initial-setup
-Version:        3.13.4
-Release:        3%{?dist}
+Version:        3.13.7
+Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
@@ -104,6 +104,24 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Wed Sep 17 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.7-1.R
+- Update to 3.13.7
+
+* Tue Sep 16 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.6-1.R
+- Update to 3.13.6
+
+* Mon Sep 08 2014 Adam Williamson <awilliam@redhat.com> - 3.13.5-2.R
+- backport upstream patch to offer full list of keyboard layouts (BGO #729208)
+
+* Wed Sep 03 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.5-1.R
+- Update to 3.13.5
+
+* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.13.4-3.R
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
+* Wed Aug 13 2014 Matthias Clasen <mclasen@redhat.com> - 3.13.4-2.R
+- Drop the yelp focus patch (we've dropped the yelp patch it depends on)
+
 * Sat Aug 30 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.13.4-1.R
 - update to 3.13.4
 
