@@ -122,7 +122,7 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 * Wed Aug 13 2014 Matthias Clasen <mclasen@redhat.com> - 3.13.4-2.R
 - Drop the yelp focus patch (we've dropped the yelp patch it depends on)
 
-* Sat Aug 30 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.13.4-1.R
+* Sat Aug 10 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.13.4-1.R
 - update to 3.13.4
 
 * Wed May 28 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.1-1.R
