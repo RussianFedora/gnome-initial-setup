@@ -91,6 +91,7 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 
 %files -f %{name}.lang
 %doc COPYING README
+%{_sysconfdir}/xdg/autostart/gnome-initial-setup-first-login.desktop
 %{_libexecdir}/gnome-initial-setup
 %{_libexecdir}/gnome-initial-setup-copy-worker
 %{_libexecdir}/gnome-welcome-tour
