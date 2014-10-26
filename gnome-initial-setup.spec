@@ -5,7 +5,7 @@ Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
-Source0:        http://download.gnome.org/sources/%{name}/3.13/%{name}-%{version}.tar.xz
+Source0:        http://download.gnome.org/sources/%{name}/3.14/%{name}-%{version}.tar.xz
 Patch0:         0001-password-Fix-changing-the-login-keyring-password.patch
 Patch9:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
