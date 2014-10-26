@@ -1,12 +1,13 @@
 Name:           gnome-initial-setup
-Version:        3.13.7
+Version:        3.14.1
 Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
 Source0:        http://download.gnome.org/sources/%{name}/3.13/%{name}-%{version}.tar.xz
-Patch9: gnome-initial-setup-3.10.1.1-read-pretty_name.patch
+Patch0:         0001-password-Fix-changing-the-login-keyring-password.patch
+Patch9:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
@@ -65,6 +66,7 @@ you through configuring it. It is integrated with gdm.
 
 %prep
 %setup -q
+%patch0 -p1
 %patch9 -p1 -b .read-pretty_name
 
 %build
@@ -105,6 +107,15 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
+* Tue Oct 21 2014 Rui Matos <rmatos@redhat.com> - 3.14.1-2.R
+- Resolves: rhbz#1154206
+
+* Sat Oct 11 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.1-1.R
+- Update to 3.14.1
+
+* Tue Sep 23 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.0-1.R
+- Update to 3.14.0
+
 * Wed Sep 17 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.7-1.R
 - Update to 3.13.7
 
