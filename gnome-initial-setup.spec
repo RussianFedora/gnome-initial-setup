@@ -1,6 +1,6 @@
 Name:           gnome-initial-setup
 Version:        3.14.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
