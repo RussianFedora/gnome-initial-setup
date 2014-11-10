@@ -1,0 +1,398 @@
+From 539f1bafb3f4c722cb1793f1a5dc71014a458a1e Mon Sep 17 00:00:00 2001
+From: Rui Matos <tiagomatos@gmail.com>
+Date: Thu, 30 Oct 2014 14:56:54 +0100
+Subject: [PATCH 1/4] keyboard: Prevent going forward before the localed proxy
+ is ready
+
+Otherwise we would crash on set_localed_input() and we really don't
+want to move forward before we have a chance to pre-select the system
+layout which we'll get from localed in the next patch.
+---
+ .../pages/keyboard/gis-keyboard-page.c             | 26 +++++++++++++---------
+ 1 file changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c b/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
+index d3af107..3a856b5 100644
+--- a/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
++++ b/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
+@@ -90,6 +90,9 @@ set_localed_input (GisKeyboardPage *self)
+ 	GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
+ 	const gchar *layout, *variant;
+ 
++        if (!priv->localed)
++                return;
++
+ 	cc_input_chooser_get_layout (CC_INPUT_CHOOSER (priv->input_chooser), &layout, &variant);
+ 
+         g_dbus_proxy_call (priv->localed,
+@@ -149,6 +152,17 @@ gis_keyboard_page_apply (GisPage      *page,
+ }
+ 
+ static void
++update_page_complete (GisKeyboardPage *self)
++{
++        GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
++        gboolean complete;
++
++        complete = (priv->localed != NULL &&
++                    cc_input_chooser_get_input_id (CC_INPUT_CHOOSER (priv->input_chooser)) != NULL);
++        gis_page_set_complete (GIS_PAGE (self), complete);
++}
++
++static void
+ localed_proxy_ready (GObject      *source,
+ 		     GAsyncResult *res,
+ 		     gpointer      data)
+@@ -168,6 +182,8 @@ localed_proxy_ready (GObject      *source,
+ 	}
+ 
+ 	priv->localed = proxy;
++
++        update_page_complete (self);
+ }
+ 
+ static void
+@@ -178,16 +194,6 @@ input_confirmed (CcInputChooser  *chooser,
+ }
+ 
+ static void
+-update_page_complete (GisKeyboardPage *self)
+-{
+-        GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
+-        gboolean complete;
+-
+-        complete = cc_input_chooser_get_input_id (CC_INPUT_CHOOSER (priv->input_chooser)) != NULL;
+-        gis_page_set_complete (GIS_PAGE (self), complete);
+-}
+-
+-static void
+ input_changed (CcInputChooser  *chooser,
+                GisKeyboardPage *self)
+ {
+-- 
+1.9.0
+
+
+From 5fb41bfd440b10ae1ee6ce5570e61ba71366d60f Mon Sep 17 00:00:00 2001
+From: Rui Matos <tiagomatos@gmail.com>
+Date: Thu, 30 Oct 2014 17:55:28 +0100
+Subject: [PATCH 2/4] keyboard: Ensure that we show the selected input source
+
+This will become important in a coming commit that will pre-select the
+system keyboard layout if one is set.
+---
+ gnome-initial-setup/pages/keyboard/cc-input-chooser.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/gnome-initial-setup/pages/keyboard/cc-input-chooser.c b/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
+index 7918d1a..f11c708 100644
+--- a/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
++++ b/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
+@@ -45,7 +45,7 @@
+ #define INPUT_SOURCE_TYPE_XKB "xkb"
+ #define INPUT_SOURCE_TYPE_IBUS "ibus"
+ 
+-#define MIN_ROWS 6
++#define MIN_ROWS 5
+ 
+ struct _CcInputChooserPrivate
+ {
+@@ -274,6 +274,9 @@ sync_checkmark (GtkWidget *row,
+ 	else
+ 	        should_be_visible = g_strcmp0 (widget->id, priv->id) == 0 && g_strcmp0 (widget->type, priv->type) == 0;
+         gtk_widget_set_opacity (widget->checkmark, should_be_visible ? 1.0 : 0.0);
++
++        if (widget->is_extra && should_be_visible)
++                widget->is_extra = FALSE;
+ }
+ 
+ static void
+@@ -283,6 +286,7 @@ sync_all_checkmarks (CcInputChooser *chooser)
+ 
+         gtk_container_foreach (GTK_CONTAINER (priv->input_list),
+                                sync_checkmark, chooser);
++        gtk_list_box_invalidate_filter (GTK_LIST_BOX (priv->input_list));
+ }
+ 
+ static GtkWidget *
+-- 
+1.9.0
+
+
+From a6b0132193d1c4031035d4d412285a488dfaf2a6 Mon Sep 17 00:00:00 2001
+From: Rui Matos <tiagomatos@gmail.com>
+Date: Thu, 30 Oct 2014 17:58:16 +0100
+Subject: [PATCH 3/4] keyboard: Preserve system keyboard layouts
+
+If there are keyboard layouts already configured system wide we should
+keep and import them as user input sources.
+
+For simplicity we still only allow the user to choose one input source
+and in that case we'll use it as the default, i.e. the first.
+
+The first system layout, if it exists, is pre-selected in the chooser.
+---
+ .../pages/keyboard/gis-keyboard-page.c             | 118 ++++++++++++++++++++-
+ 1 file changed, 114 insertions(+), 4 deletions(-)
+
+diff --git a/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c b/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
+index 3a856b5..8f3ad34 100644
+--- a/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
++++ b/gnome-initial-setup/pages/keyboard/gis-keyboard-page.c
+@@ -45,6 +45,8 @@ struct _GisKeyboardPagePrivate {
+ 	GCancellable *cancellable;
+ 	GPermission *permission;
+         GSettings *input_settings;
++
++        GSList *system_sources;
+ };
+ typedef struct _GisKeyboardPagePrivate GisKeyboardPagePrivate;
+ 
+@@ -64,6 +66,8 @@ gis_keyboard_page_finalize (GObject *object)
+ 	g_clear_object (&priv->localed);
+ 	g_clear_object (&priv->input_settings);
+ 
++        g_slist_free_full (priv->system_sources, g_free);
++
+ 	G_OBJECT_CLASS (gis_keyboard_page_parent_class)->finalize (object);
+ }
+ 
+@@ -71,12 +75,25 @@ static void
+ set_input_settings (GisKeyboardPage *self)
+ {
+         GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
++        const gchar *type;
++        const gchar *id;
+         GVariantBuilder builder;
++        GSList *l;
++
++        type = cc_input_chooser_get_input_type (CC_INPUT_CHOOSER (priv->input_chooser));
++        id = cc_input_chooser_get_input_id (CC_INPUT_CHOOSER (priv->input_chooser));
+ 
+         g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ss)"));
+-	g_variant_builder_add (&builder, "(ss)",
+-		cc_input_chooser_get_input_type (CC_INPUT_CHOOSER (priv->input_chooser)),
+-		cc_input_chooser_get_input_id (CC_INPUT_CHOOSER (priv->input_chooser)));
++	g_variant_builder_add (&builder, "(ss)", type, id);
++
++        for (l = priv->system_sources; l; l = l->next) {
++                const gchar *sid = l->data;
++
++                if (g_str_equal (id, sid) && g_str_equal (type, "xkb"))
++                        continue;
++
++                g_variant_builder_add (&builder, "(ss)", "xkb", sid);
++        }
+ 
+ 	g_settings_set_value (priv->input_settings, KEY_INPUT_SOURCES, g_variant_builder_end (&builder));
+ 	g_settings_set_uint (priv->input_settings, KEY_CURRENT_INPUT_SOURCE, 0);
+@@ -89,17 +106,49 @@ set_localed_input (GisKeyboardPage *self)
+ {
+ 	GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
+ 	const gchar *layout, *variant;
++        GString *layouts;
++        GString *variants;
++        GSList *l;
+ 
+         if (!priv->localed)
+                 return;
+ 
+ 	cc_input_chooser_get_layout (CC_INPUT_CHOOSER (priv->input_chooser), &layout, &variant);
++        if (layout == NULL)
++                layout = "";
++        if (variant == NULL)
++                variant = "";
++
++        layouts = g_string_new (layout);
++        variants = g_string_new (variant);
++
++#define LAYOUT(a) (a[0])
++#define VARIANT(a) (a[1] ? a[1] : "")
++        for (l = priv->system_sources; l; l = l->next) {
++                const gchar *sid = l->data;
++                gchar **lv = g_strsplit (sid, "+", -1);
++
++                if (!g_str_equal (LAYOUT (lv), layout) ||
++                    !g_str_equal (VARIANT (lv), variant)) {
++                        if (layouts->str[0]) {
++                                g_string_append_c (layouts, ',');
++                                g_string_append_c (variants, ',');
++                        }
++                        g_string_append (layouts, LAYOUT (lv));
++                        g_string_append (variants, VARIANT (lv));
++                }
++                g_strfreev (lv);
++        }
++#undef LAYOUT
++#undef VARIANT
+ 
+         g_dbus_proxy_call (priv->localed,
+                            "SetX11Keyboard",
+-                           g_variant_new ("(ssssbb)", layout, "", variant, "", TRUE, TRUE),
++                           g_variant_new ("(ssssbb)", layouts->str, "", variants->str, "", TRUE, TRUE),
+                            G_DBUS_CALL_FLAGS_NONE,
+                            -1, NULL, NULL, NULL);
++        g_string_free (layouts, TRUE);
++        g_string_free (variants, TRUE);
+ }
+ 
+ static void
+@@ -152,6 +201,66 @@ gis_keyboard_page_apply (GisPage      *page,
+ }
+ 
+ static void
++load_localed_input (GisKeyboardPage *self)
++{
++	GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
++        GVariant *v;
++        const gchar *s;
++        gchar *id;
++        guint i, n;
++        gchar **layouts = NULL;
++        gchar **variants = NULL;
++        GSList *sources = NULL;
++
++        if (!priv->localed)
++                return;
++
++        v = g_dbus_proxy_get_cached_property (priv->localed, "X11Layout");
++        if (v) {
++                s = g_variant_get_string (v, NULL);
++                layouts = g_strsplit (s, ",", -1);
++                g_variant_unref (v);
++        }
++
++        v = g_dbus_proxy_get_cached_property (priv->localed, "X11Variant");
++        if (v) {
++                s = g_variant_get_string (v, NULL);
++                if (s && *s)
++                        variants = g_strsplit (s, ",", -1);
++                g_variant_unref (v);
++        }
++
++        if (variants && variants[0])
++                n = MIN (g_strv_length (layouts), g_strv_length (variants));
++        else if (layouts && layouts[0])
++                n = g_strv_length (layouts);
++        else
++                n = 0;
++
++        for (i = 0; i < n && layouts[i][0]; i++) {
++                if (variants && variants[i] && variants[i][0])
++                        id = g_strdup_printf ("%s+%s", layouts[i], variants[i]);
++                else
++                        id = g_strdup (layouts[i]);
++                sources = g_slist_prepend (sources, id);
++        }
++
++        g_strfreev (variants);
++        g_strfreev (layouts);
++
++        /* These will be added silently after the user selection when
++         * writing out the settings. */
++        g_slist_free_full (priv->system_sources, g_free);
++        priv->system_sources = g_slist_reverse (sources);
++
++        /* We only pre-select the first system layout. */
++        if (priv->system_sources)
++                cc_input_chooser_set_input (CC_INPUT_CHOOSER (priv->input_chooser),
++                                            (const gchar *) priv->system_sources->data,
++                                            "xkb");
++}
++
++static void
+ update_page_complete (GisKeyboardPage *self)
+ {
+         GisKeyboardPagePrivate *priv = gis_keyboard_page_get_instance_private (self);
+@@ -183,6 +292,7 @@ localed_proxy_ready (GObject      *source,
+ 
+ 	priv->localed = proxy;
+ 
++        load_localed_input (self);
+         update_page_complete (self);
+ }
+ 
+-- 
+1.9.0
+
+
+From 9acab741946a2d7f8ceaf93d14212dd7af21d2d5 Mon Sep 17 00:00:00 2001
+From: Rui Matos <tiagomatos@gmail.com>
+Date: Thu, 30 Oct 2014 18:52:41 +0100
+Subject: [PATCH 4/4] keyboard: Don't choose irrelevant layouts as first level
+ choices
+
+If the language and country layouts aren't enough to fill our first
+level number of rows we would end up showing totally irrelevant
+layouts which looks bad and defeats the purpose of the initial
+filtering.
+---
+ .../pages/keyboard/cc-input-chooser.c              | 38 +++++++++++++++++++---
+ 1 file changed, 33 insertions(+), 5 deletions(-)
+
+diff --git a/gnome-initial-setup/pages/keyboard/cc-input-chooser.c b/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
+index f11c708..c5bd085 100644
+--- a/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
++++ b/gnome-initial-setup/pages/keyboard/cc-input-chooser.c
+@@ -324,6 +324,36 @@ no_results_widget_new (void)
+ }
+ 
+ static void
++choose_non_extras_foreach (GtkWidget *row,
++                           gpointer   user_data)
++{
++        GtkWidget *child;
++        InputWidget *widget;
++        guint *count = user_data;
++
++        *count += 1;
++        if (*count > MIN_ROWS)
++                return;
++
++        child = gtk_bin_get_child (GTK_BIN (row));
++        widget = get_input_widget (child);
++        if (widget == NULL)
++                return;
++
++        widget->is_extra = FALSE;
++}
++
++static void
++choose_non_extras (CcInputChooser *chooser)
++{
++        CcInputChooserPrivate *priv = cc_input_chooser_get_instance_private (chooser);
++        guint count = 0;
++
++        gtk_container_foreach (GTK_CONTAINER (priv->input_list),
++                               choose_non_extras_foreach, &count);
++}
++
++static void
+ add_rows_to_list (CcInputChooser  *chooser,
+ 	          GList            *list,
+ 	          const gchar      *type,
+@@ -348,11 +378,7 @@ add_rows_to_list (CcInputChooser  *chooser,
+ 		}
+ 		g_hash_table_add (priv->inputs, key);
+ 
+-		if (g_hash_table_size (priv->inputs) > MIN_ROWS)
+-			is_extra = TRUE;
+-		else
+-			is_extra = FALSE;
+-		widget = input_widget_new (chooser, type, id, is_extra);
++		widget = input_widget_new (chooser, type, id, TRUE);
+ 		gtk_container_add (GTK_CONTAINER (priv->input_list), widget);
+ 	}
+ }
+@@ -394,6 +420,8 @@ get_locale_infos (CcInputChooser *chooser)
+ 	add_rows_to_list (chooser, list, INPUT_SOURCE_TYPE_XKB, id);
+ 	g_list_free (list);
+ 
++        choose_non_extras (chooser);
++
+ 	list = gnome_xkb_info_get_all_layouts (priv->xkb_info);
+ 	add_rows_to_list (chooser, list, INPUT_SOURCE_TYPE_XKB, id);
+ 	g_list_free (list);
+-- 
+1.9.0
+
