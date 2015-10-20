@@ -1,12 +1,12 @@
 Name:           gnome-initial-setup
-Version:        3.14.2.1
+Version:        3.18.0
 Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPLv2+
 URL:            https://live.gnome.org/GnomeOS/Design/Whiteboards/InitialSetup
-Source0:        http://download.gnome.org/sources/%{name}/3.14/%{name}-%{version}.tar.xz
-Patch9:		gnome-initial-setup-3.10.1.1-read-pretty_name.patch
+Source0:        https://download.gnome.org/sources/%{name}/3.18/%{name}-%{version}.tar.xz
+Patch10:	gnome-initial-setup-3.10.1.1-read-pretty_name.patch
 
 %global nm_version 0.9.6.4
 %global glib_required_version 2.36.0
@@ -37,6 +37,7 @@ BuildRequires:  pkgconfig(gio-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gio-unix-2.0) >= %{glib_required_version}
 BuildRequires:  pkgconfig(gdm)
 BuildRequires:  pkgconfig(iso-codes)
+BuildRequires:  pkgconfig(webkit2gtk-4.0)
 BuildRequires:  krb5-devel
 BuildRequires:  ibus-devel
 BuildRequires:  rest-devel
@@ -52,10 +53,6 @@ Requires: /usr/bin/gkbd-keyboard-display
 
 Requires(pre): shadow-utils
 
-Requires(post): systemd-units
-Requires(preun): systemd-units
-Requires(postun): systemd-units
-
 Provides: user(%name)
 
 %description
@@ -65,14 +62,14 @@ you through configuring it. It is integrated with gdm.
 
 %prep
 %setup -q
-%patch9 -p1 -b .read-pretty_name
+%patch10 -p1 -b .read-pretty_name
 
 %build
 %configure
 make %{?_smp_mflags}
 
 %install
-make install DESTDIR=%{buildroot}
+%make_install
 find %{buildroot} -name '*.la' -exec rm -f {} ';'
 
 # Desktop file does not (and probably will not) ever validate, as it uses
@@ -90,13 +87,14 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/gnome-initial-setup
 useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null || :
 
 %files -f %{name}.lang
-%doc COPYING README
-%{_sysconfdir}/xdg/autostart/gnome-initial-setup-first-login.desktop
+%license COPYING
+%doc README
 %{_libexecdir}/gnome-initial-setup
 %{_libexecdir}/gnome-initial-setup-copy-worker
 %{_libexecdir}/gnome-welcome-tour
 %{_sysconfdir}/xdg/autostart/gnome-welcome-tour.desktop
 %{_sysconfdir}/xdg/autostart/gnome-initial-setup-copy-worker.desktop
+%{_sysconfdir}/xdg/autostart/gnome-initial-setup-first-login.desktop
 
 %{_datadir}/gdm/greeter/applications/gnome-initial-setup.desktop
 %{_datadir}/gdm/greeter/applications/setup-shell.desktop
@@ -105,57 +103,116 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %{_datadir}/polkit-1/rules.d/20-gnome-initial-setup.rules
 
 %changelog
-* Tue Nov 11 2014 Rui Matos <rmatos@redhat.com> - 3.14.2.1-1.R
+* Tue Oct 20 2015 Arkady L. Shane <ashejn@russianfedora.pro> - 3.18.0-1.R
+- read NAME from PRETTY_NAME var of os-release
+
+* Mon Sep 21 2015 Kalev Lember <klember@redhat.com> - 3.18.0-1
+- Update to 3.18.0
+
+* Mon Aug 31 2015 Kalev Lember <klember@redhat.com> - 3.17.91-1
+- Update to 3.17.91
+
+* Mon Aug 17 2015 Kalev Lember <klember@redhat.com> - 3.17.90-1
+- Update to 3.17.90
+- Use make_install macro
+
+* Mon Aug 17 2015 Kalev Lember <klember@redhat.com> - 3.17.4-2
+- Rebuilt for libcheese soname bump
+
+* Mon Jul 27 2015 David King <amigadave@amigadave.com> - 3.17.4-1
+- Update to 3.17.4
+
+* Wed Jul 22 2015 David King <amigadave@amigadave.com> - 3.16.3-3
+- Bump for new gnome-desktop3
+
+* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.16.3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* Mon May 18 2015 Matthias Clasen <mclasen@redhat.com> - 3.16.3-1
+- Update to 3.16.3
+
+* Tue May 12 2015 Kalev Lember <kalevlember@gmail.com> - 3.16.2-1
+- Update to 3.16.2
+
+* Wed Apr 15 2015 Kalev Lember <kalevlember@gmail.com> - 3.16.1-1
+- Update to 3.16.1
+
+* Mon Mar 23 2015 Kalev Lember <kalevlember@gmail.com> - 3.16.0-1
+- Update to 3.16.0
+
+* Wed Mar 18 2015 Kalev Lember <kalevlember@gmail.com> - 3.15.92-1
+- Update to 3.15.92
+
+* Thu Mar 05 2015 Kalev Lember <kalevlember@gmail.com> - 3.15.91.1-1
+- Update to 3.15.91.1
+
+* Mon Mar 02 2015 Kalev Lember <kalevlember@gmail.com> - 3.15.91-1
+- Update to 3.15.91
+- Use the %%license macro for the COPYING file
+
+* Thu Feb 19 2015 Matthias Clasen <mclasen@redhat.com> - 3.15.90.1-1
+- Update to 3.15.90.1
+
+* Tue Dec 16 2014 Rui Matos <rmatos@redhat.com> - 3.14.2.1-2
+- Resolves: rhbz#1172363
+
+* Tue Nov 11 2014 Rui Matos <rmatos@redhat.com> - 3.14.2.1-1
 - Update to 3.14.2.1
 
-* Mon Nov 10 2014 Rui Matos <rmatos@redhat.com> - 3.14.2-1.R
+* Mon Nov 10 2014 Rui Matos <rmatos@redhat.com> - 3.14.2-1
 - Update to 3.14.2
 - Resolves: rhbz#1158442
 
-* Fri Oct 31 2014 Rui Matos <rmatos@redhat.com> - 3.14.1-3.R
+* Fri Oct 31 2014 Rui Matos <rmatos@redhat.com> - 3.14.1-3
 - Resolves: rhbz#1151519
 
-* Tue Oct 21 2014 Rui Matos <rmatos@redhat.com> - 3.14.1-2.R
+* Tue Oct 21 2014 Rui Matos <rmatos@redhat.com> - 3.14.1-2
 - Resolves: rhbz#1154206
 
-* Sat Oct 11 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.1-1.R
+* Sat Oct 11 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.1-1
 - Update to 3.14.1
 
-* Tue Sep 23 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.0-1.R
+* Tue Sep 23 2014 Kalev Lember <kalevlember@gmail.com> - 3.14.0-1
 - Update to 3.14.0
 
-* Wed Sep 17 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.7-1.R
+* Wed Sep 17 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.7-1
 - Update to 3.13.7
 
-* Tue Sep 16 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.6-1.R
+* Tue Sep 16 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.6-1
 - Update to 3.13.6
 
-* Mon Sep 08 2014 Adam Williamson <awilliam@redhat.com> - 3.13.5-2.R
+* Mon Sep 08 2014 Adam Williamson <awilliam@redhat.com> - 3.13.5-2
 - backport upstream patch to offer full list of keyboard layouts (BGO #729208)
 
-* Wed Sep 03 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.5-1.R
+* Wed Sep 03 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.5-1
 - Update to 3.13.5
 
-* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.13.4-3.R
+* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.13.4-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
-* Wed Aug 13 2014 Matthias Clasen <mclasen@redhat.com> - 3.13.4-2.R
+* Wed Aug 13 2014 Matthias Clasen <mclasen@redhat.com> - 3.13.4-2
 - Drop the yelp focus patch (we've dropped the yelp patch it depends on)
 
-* Sat Aug 10 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.13.4-1.R
-- update to 3.13.4
+* Fri Jul 25 2014 Kalev Lember <kalevlember@gmail.com> - 3.13.4-1
+- Update to 3.13.4
 
-* Wed May 28 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.1-1.R
-- update to 3.12.1
+* Thu Jul 24 2014 Matthias Clasen <mclasen@redhat.com> - 3.12.1-3
+- Fix a memory corruption crash (#1116478)
 
-* Thu Mar 27 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.12.0-1.R
-- update to 3.12.0
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.12.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
-* Wed Mar 19 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.91-1.R
-- update 3.11.92
+* Thu May 15 2014 Kalev Lember <kalevlember@gmail.com> - 3.12.1-1
+- Update to 3.12.1
 
-* Tue Mar  4 2014 Arkady L. Shane <ashejn@russianfedora.ru> - 3.11.90-1.R
-- show RFRemix instead of Fedora
+* Tue Mar 25 2014 Kalev Lember <kalevlember@gmail.com> - 3.12.0-1
+- Update to 3.12.0
+
+* Thu Mar 20 2014 Richard Hughes <rhughes@redhat.com> - 3.11.92-1
+- Update to 3.11.92
+
+* Sat Mar 08 2014 Richard Hughes <rhughes@redhat.com> - 3.11.91-1
+- Update to 3.11.91
 
 * Fri Feb 28 2014 Richard Hughes <rhughes@redhat.com> - 3.11.90-1
 - Update to 3.11.90
